@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { Builder, By, Key, until } = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
+const { diffChars } = require('diff');
 
 /* 
   スクレイピング処理
@@ -66,9 +67,34 @@ const scraping = async (url) => {
   取得したhref属性をファイルに書き込む
 */
 const writingForFile = (scrapingResult) => {
-  fs.writeFileSync('hrefs.txt', scrapingResult.join('\n'), 'utf-8');
+  fs.writeFileSync('data/hrefs.txt', scrapingResult.join('\n'), 'utf-8');
   console.log('href属性を hrefs.txt に保存しました。');
 };
+
+/* 
+  差分計算
+*/
+async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
+  // ファイルの読み込み
+  const preHrefsFile = fs.readFileSync(preHrefsPath, 'utf-8');
+  const hrefsFile = fs.readFileSync(hrefsPath, 'utf-8');
+
+  // // ファイルの差分を取得
+  const differences = diffChars(preHrefsFile, hrefsFile);
+
+  // 差分の表示
+  differences.forEach((part) => {
+    // 差分がある場合のみ表示
+    if (part.added || part.removed) {
+      console.log(part.value);
+    }
+  });
+
+  // A'をAに上書き
+  fs.writeFileSync(preHrefsPath, hrefsFile);
+
+  console.log('差分を取得し、Aを更新しました。');
+}
 
 /* 
   処理をまとめた関数
@@ -76,8 +102,17 @@ const writingForFile = (scrapingResult) => {
 const main = async () => {
   const url = `https://tonamel.com/competitions?game=streetfighter6&region=JP`;
   const scrapingResult = await scraping(url);
-  writingForFile(scrapingResult);
+  await writingForFile(scrapingResult);
+
+  const hrefsPath = 'data/hrefs.txt';
+  const preHrefsPath = 'data/preHrefs.txt';
+
+  await compareAndOverwriteFiles(preHrefsPath, hrefsPath);
 };
+
+/* 
+  webhookへのリクエスト
+*/
 
 /* 
   処理をまとめた関数の実行
