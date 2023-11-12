@@ -1,0 +1,16 @@
+{
+  "name": "seleniumjs-sample",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jshint": "^2.13.6",
+    "selenium-webdriver": "^4.15.0"
+  }
+}
