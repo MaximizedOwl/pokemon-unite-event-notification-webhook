@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { Builder, By, Key, until } = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
-const { diffChars } = require('diff');
+const { diffLines } = require('diff');
 
 /* 
   スクレイピング処理
@@ -75,26 +75,46 @@ const writingForFile = (scrapingResult) => {
   差分計算
 */
 async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
-  // ファイルの読み込み
-  const preHrefsFile = fs.readFileSync(preHrefsPath, 'utf-8');
-  const hrefsFile = fs.readFileSync(hrefsPath, 'utf-8');
+  // ファイルからテキストを読み込む関数
+  const readTextFromFile = async (filePath) => {
+    return fs.readFileSync(filePath, 'utf-8');
+  };
 
-  // // ファイルの差分を取得
-  const differences = diffChars(preHrefsFile, hrefsFile);
+  // ファイルからテキストを読み込む
+  const hrefsFile = await readTextFromFile(hrefsPath);
+  const preHrefsFile = await readTextFromFile(preHrefsPath);
 
-  // 差分の表示
-  differences.forEach((part) => {
-    // 差分がある場合のみ表示
-    if (part.added || part.removed) {
-      console.log(part.value);
+  // ファイルの差分を取得
+  const diffResult = await diffLines(preHrefsFile, hrefsFile);
+
+  let differences = [];
+  // 差分を表示
+  diffResult.forEach((part) => {
+    if (part.added) {
+      console.log(`Added: ${part.value}`);
+      differences.push(part.value);
+    } else if (part.removed) {
+      console.log(`Removed: ${part.value}`);
+    } else {
+      console.log(`Unchanged: ${part.value}`);
     }
   });
 
   // A'をAに上書き
   fs.writeFileSync(preHrefsPath, hrefsFile);
 
+  console.log(`differences: ` + differences);
   console.log('差分を取得し、Aを更新しました。');
+
+  return differences;
 }
+
+/* 
+  webhookへのリクエスト
+*/
+const connectWebhook = async (differences) => {
+  const DISCORD_WEBHOOK_URL = 'ここに取得したWebhook URLを入れる';
+};
 
 /* 
   処理をまとめた関数
@@ -107,12 +127,9 @@ const main = async () => {
   const hrefsPath = 'data/hrefs.txt';
   const preHrefsPath = 'data/preHrefs.txt';
 
-  await compareAndOverwriteFiles(preHrefsPath, hrefsPath);
+  const differences = await compareAndOverwriteFiles(preHrefsPath, hrefsPath);
+  await connectWebhook(differences);
 };
-
-/* 
-  webhookへのリクエスト
-*/
 
 /* 
   処理をまとめた関数の実行

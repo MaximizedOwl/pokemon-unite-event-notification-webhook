@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.6.1",
     "diff": "^5.1.0",
+    "discord.js": "^14.13.0",
     "jshint": "^2.13.6",
     "selenium-webdriver": "^4.15.0"
   }
