@@ -2,6 +2,26 @@ const fs = require('fs');
 const { Builder, By, Key, until } = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
 const { diffLines } = require('diff');
+const axios = require('axios');
+
+const getWebhookUrl = async () => {
+  // .env ファイルから環境変数を読み込む
+
+  require('dotenv').config();
+  // DISCORD_WEBHOOK_URL 環境変数を取得
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  console.log(webhookUrl);
+
+  // WEBHOOK_URL が設定されているか確認
+  if (!webhookUrl) {
+    console.error('DISCORD_WEBHOOK_URL is not defined in the .env file.');
+    process.exit(1); // エラーコードでプロセスを終了
+  }
+
+  // ここで webhookUrl を使用して何かしらの処理を行う
+
+  return webhookUrl;
+};
 
 /* 
   スクレイピング処理
@@ -89,9 +109,10 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
 
   let differences = [];
   // 差分を表示
-  diffResult.forEach((part) => {
+  await diffResult.forEach((part) => {
     if (part.added) {
       console.log(`Added: ${part.value}`);
+      console.log(`typeof: ${typeof part.value}`);
       differences.push(part.value);
     } else if (part.removed) {
       console.log(`Removed: ${part.value}`);
@@ -100,11 +121,11 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
     }
   });
 
-  // A'をAに上書き
+  // hrefsFileをpreHrefsPathに上書き
   fs.writeFileSync(preHrefsPath, hrefsFile);
 
   console.log(`differences: ` + differences);
-  console.log('差分を取得し、Aを更新しました。');
+  console.log('差分を取得し、hrefs.txtを更新しました。');
 
   return differences;
 }
@@ -113,7 +134,30 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
   webhookへのリクエスト
 */
 const connectWebhook = async (differences) => {
-  const DISCORD_WEBHOOK_URL = 'ここに取得したWebhook URLを入れる';
+  const webhookUrl = await getWebhookUrl();
+
+  console.log();
+
+  const message = `新着のイベントがあります。
+  ${differences.forEach((element) => {
+    return element + '\n';
+  })}`;
+
+  // axiosで送る
+  try {
+    // POSTリクエストでDiscordにmessageを送信
+    const response = await axios.post(
+      webhookUrl,
+      { content: message } // このオブジェクトがJSONとして送信される
+    );
+    // データ送信が成功するとレスポンスが来る
+    console.log('レスポンスを受信しました：' + response.data);
+    console.log('POSTに成功しました。');
+  } catch (error) {
+    // ネットワークに接続できてない・サーバーが落ちてる・URLが違うなど
+    console.log('POSTに失敗しました。');
+    console.error(error);
+  }
 };
 
 /* 
@@ -128,7 +172,12 @@ const main = async () => {
   const preHrefsPath = 'data/preHrefs.txt';
 
   const differences = await compareAndOverwriteFiles(preHrefsPath, hrefsPath);
-  await connectWebhook(differences);
+
+  console.log(`differences.length: ` + differences.length);
+
+  (await differences.length) > 0
+    ? await connectWebhook(differences)
+    : console.log(`新着イベントはありませんでした。`);
 };
 
 /* 
