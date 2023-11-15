@@ -1,8 +1,13 @@
 const fs = require('fs');
-const { Builder, By, Key, until } = require('selenium-webdriver');
+const { Builder, By } = require('selenium-webdriver');
 const firefox = require('selenium-webdriver/firefox');
 const { diffLines } = require('diff');
 const axios = require('axios');
+const {
+  COMPETIITON_URL,
+  HREFS_PATH,
+  PREHREFS_PATH,
+} = require('./utils/constants');
 
 /* 
   .env ファイルから環境変数を読み込む
@@ -10,16 +15,15 @@ const axios = require('axios');
 */
 const getWebhookUrl = async () => {
   require('dotenv').config();
+  const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-
-  // WEBHOOK_URL が設定されているか確認
-  if (!webhookUrl) {
-    console.error('DISCORD_WEBHOOK_URL is not defined in the .env file.');
+  // DISCORD_WEBHOOK_URL が設定されているか確認
+  if (!DISCORD_WEBHOOK_URL) {
+    console.error('DISCORD_WEBHOOK_URL .env ファイルで定義されていません。');
     process.exit(1); // エラーコードでプロセスを終了
+  } else {
+    return DISCORD_WEBHOOK_URL;
   }
-
-  return webhookUrl;
 };
 
 /* 
@@ -64,7 +68,7 @@ const scraping = async (url) => {
         const href = await element.getAttribute('href');
 
         // 余分なリンクを削除（"https://tonamel.com/organize/new_competition"とかが入ってくる）
-        if (href.includes('https://tonamel.com/competition')) {
+        if (href.includes(COMPETIITON_URL)) {
           console.log(href);
           return href.trim();
         } else {
@@ -86,7 +90,7 @@ const scraping = async (url) => {
   取得したhref属性をファイルに書き込む
 */
 const writingForFile = (scrapingResult) => {
-  fs.writeFileSync('data/hrefs.txt', scrapingResult.join('\n'), 'utf-8');
+  fs.writeFileSync(HREFS_PATH, scrapingResult.join('\n'), 'utf-8');
   console.log('href属性を hrefs.txt に保存しました。');
 };
 
@@ -180,12 +184,9 @@ const main = async () => {
   const scrapingResult = await scraping(url);
   await writingForFile(scrapingResult);
 
-  const hrefsPath = 'data/hrefs.txt';
-  const preHrefsPath = 'data/preHrefs.txt';
-
   const differencesList = await compareAndOverwriteFiles(
-    preHrefsPath,
-    hrefsPath
+    PREHREFS_PATH,
+    HREFS_PATH
   );
 
   console.log(`differences.length: ` + differencesList.length);
