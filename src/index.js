@@ -98,15 +98,15 @@ const writingForFile = (scrapingResult) => {
 /* 
   差分計算
 */
-async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
+async function compareAndOverwriteFiles() {
   // ファイルからテキストを読み込む関数
   const readTextFromFile = async (filePath) => {
     return fs.readFileSync(filePath, 'utf-8');
   };
 
   // ファイルからテキストを読み込む
-  const hrefsFile = await readTextFromFile(hrefsPath);
-  const preHrefsFile = await readTextFromFile(preHrefsPath);
+  const hrefsFile = await readTextFromFile(HREFS_PATH);
+  const preHrefsFile = await readTextFromFile(PREHREFS_PATH);
 
   // ファイルの差分を取得
   const diffResult = await diffLines(preHrefsFile, hrefsFile);
@@ -125,11 +125,13 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
   });
 
   // hrefsFileをpreHrefsPathに上書き
-  fs.writeFileSync(preHrefsPath, hrefsFile);
+  fs.writeFileSync(PREHREFS_PATH, hrefsFile);
 
   console.log('差分を取得し、hrefs.txtを更新しました。');
 
   let differencesList = [];
+
+  // 更新がなかった場合「undefined」が入ってくる
   if (resultList[0] != undefined) {
     // resultListには要素の1つ目に末尾に改行コードを含んだURLが文字列として入っている
     // 配列の最後に改行コード分の空白が入ってしまうので改行分を削除
@@ -183,10 +185,7 @@ const main = async () => {
   const scrapingResult = await scraping(TONAMEL_URL);
   await writingForFile(scrapingResult);
 
-  const differencesList = await compareAndOverwriteFiles(
-    PREHREFS_PATH,
-    HREFS_PATH
-  );
+  const differencesList = await compareAndOverwriteFiles();
 
   console.log(`differences.length: ` + differencesList.length);
 
