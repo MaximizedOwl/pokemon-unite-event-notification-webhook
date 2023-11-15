@@ -116,7 +116,6 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
   await diffResult.forEach((part) => {
     if (part.added) {
       console.log(`Added: ${part.value}`);
-      console.log(`typeof: ${typeof part.value}`);
       resultList.push(part.value);
     } else if (part.removed) {
       console.log(`Removed: ${part.value}`);
@@ -132,9 +131,9 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
 
   let differencesList = [];
   if (resultList[0] != undefined) {
-    const differencesStr = resultList[0];
-    console.log(`resultList: ` + resultList);
-    console.log(`resultList[0]: ` + resultList[0]);
+    // resultListには要素の1つ目に末尾に改行コードを含んだURLが文字列として入っている
+    // 配列の最後に改行コード分の空白が入ってしまうので改行分を削除
+    const differencesStr = resultList[0].replace(/\n$/, '');
 
     // differencesを改行コードで分け配列に格納
     differencesList = differencesStr.split('\n');
