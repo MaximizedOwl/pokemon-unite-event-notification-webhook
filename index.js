@@ -4,21 +4,20 @@ const firefox = require('selenium-webdriver/firefox');
 const { diffLines } = require('diff');
 const axios = require('axios');
 
+/* 
+  .env ファイルから環境変数を読み込む
+  DISCORD_WEBHOOK_URL 環境変数を取得
+*/
 const getWebhookUrl = async () => {
-  // .env ファイルから環境変数を読み込む
-
   require('dotenv').config();
-  // DISCORD_WEBHOOK_URL 環境変数を取得
+
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  console.log(webhookUrl);
 
   // WEBHOOK_URL が設定されているか確認
   if (!webhookUrl) {
     console.error('DISCORD_WEBHOOK_URL is not defined in the .env file.');
     process.exit(1); // エラーコードでプロセスを終了
   }
-
-  // ここで webhookUrl を使用して何かしらの処理を行う
 
   return webhookUrl;
 };
@@ -107,13 +106,13 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
   // ファイルの差分を取得
   const diffResult = await diffLines(preHrefsFile, hrefsFile);
 
-  let differences = [];
+  let resultList = [];
   // 差分を表示
   await diffResult.forEach((part) => {
     if (part.added) {
       console.log(`Added: ${part.value}`);
       console.log(`typeof: ${typeof part.value}`);
-      differences.push(part.value);
+      resultList.push(part.value);
     } else if (part.removed) {
       console.log(`Removed: ${part.value}`);
     } else {
@@ -124,24 +123,37 @@ async function compareAndOverwriteFiles(preHrefsPath, hrefsPath) {
   // hrefsFileをpreHrefsPathに上書き
   fs.writeFileSync(preHrefsPath, hrefsFile);
 
-  console.log(`differences: ` + differences);
   console.log('差分を取得し、hrefs.txtを更新しました。');
 
-  return differences;
+  let differencesList = [];
+  if (resultList[0] != undefined) {
+    const differencesStr = resultList[0];
+    console.log(`resultList: ` + resultList);
+    console.log(`resultList[0]: ` + resultList[0]);
+
+    // differencesを改行コードで分け配列に格納
+    differencesList = differencesStr.split('\n');
+
+    console.log(`differencesList: ` + differencesList);
+  }
+
+  return differencesList; // 何も追加がなければ空の配列が返る
 }
 
 /* 
   webhookへのリクエスト
 */
-const connectWebhook = async (differences) => {
+const connectWebhook = async (differencesList) => {
   const webhookUrl = await getWebhookUrl();
 
-  console.log();
+  let message = '新着のイベントがあります。\n'; // 最初のメッセージを設定
 
-  const message = `新着のイベントがあります。
-  ${differences.forEach((element) => {
-    return element + '\n';
-  })}`;
+  // 配列の要素をテンプレート構文とforEachでメッセージに追加
+  differencesList.forEach((element) => {
+    message += `${element}\n`; // 各要素の後に改行を追加
+  });
+
+  console.log('message: ' + message);
 
   // axiosで送る
   try {
@@ -171,12 +183,15 @@ const main = async () => {
   const hrefsPath = 'data/hrefs.txt';
   const preHrefsPath = 'data/preHrefs.txt';
 
-  const differences = await compareAndOverwriteFiles(preHrefsPath, hrefsPath);
+  const differencesList = await compareAndOverwriteFiles(
+    preHrefsPath,
+    hrefsPath
+  );
 
-  console.log(`differences.length: ` + differences.length);
+  console.log(`differences.length: ` + differencesList.length);
 
-  (await differences.length) > 0
-    ? await connectWebhook(differences)
+  (await differencesList.length) > 0
+    ? await connectWebhook(differencesList)
     : console.log(`新着イベントはありませんでした。`);
 };
 
