@@ -7,6 +7,7 @@ const {
   COMPETIITON_URL,
   HREFS_PATH,
   PREHREFS_PATH,
+  TONAMEL_URL,
 } = require('./utils/constants');
 
 /* 
@@ -180,8 +181,7 @@ const connectWebhook = async (differencesList) => {
   処理をまとめた関数
 */
 const main = async () => {
-  const url = `https://tonamel.com/competitions?game=streetfighter6&region=JP`;
-  const scrapingResult = await scraping(url);
+  const scrapingResult = await scraping(TONAMEL_URL);
   await writingForFile(scrapingResult);
 
   const differencesList = await compareAndOverwriteFiles(
