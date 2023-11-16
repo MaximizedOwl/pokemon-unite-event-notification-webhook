@@ -8,6 +8,9 @@ const {
   HREFS_PATH,
   PREHREFS_PATH,
   TONAMEL_URL,
+  EXEC_SCRIPT_GET_SCROLLHEIGHT,
+  EXEC_SCRIPT_SCROLLING,
+  ENCODING_TYPE,
 } = require('./utils/constants');
 
 /* 
@@ -41,19 +44,15 @@ const scraping = async (url) => {
     await driver.get(url);
     console.log(`${url} から情報を取得します。`);
 
-    let lastHeight = await driver.executeScript(
-      'return document.body.scrollHeight'
-    );
+    let lastHeight = await driver.executeScript(EXEC_SCRIPT_GET_SCROLLHEIGHT);
 
     while (true) {
-      await driver.executeScript(
-        'window.scrollTo(0, document.body.scrollHeight);'
-      );
+      await driver.executeScript(EXEC_SCRIPT_SCROLLING);
       await driver.sleep(2000); // スクロールが完了するまで待機
       console.log(`スクロールが完了するまで待機しています。`);
 
       const newHeight = await driver.executeScript(
-        'return document.body.scrollHeight'
+        EXEC_SCRIPT_GET_SCROLLHEIGHT
       );
       if (newHeight === lastHeight) {
         break;
@@ -91,7 +90,7 @@ const scraping = async (url) => {
   取得したhref属性をファイルに書き込む
 */
 const writingForFile = (scrapingResult) => {
-  fs.writeFileSync(HREFS_PATH, scrapingResult.join('\n'), 'utf-8');
+  fs.writeFileSync(HREFS_PATH, scrapingResult.join('\n'), ENCODING_TYPE);
   console.log('href属性を hrefs.txt に保存しました。');
 };
 
@@ -101,7 +100,7 @@ const writingForFile = (scrapingResult) => {
 async function compareAndOverwriteFiles() {
   // ファイルからテキストを読み込む関数
   const readTextFromFile = async (filePath) => {
-    return fs.readFileSync(filePath, 'utf-8');
+    return fs.readFileSync(filePath, ENCODING_TYPE);
   };
 
   // ファイルからテキストを読み込む
