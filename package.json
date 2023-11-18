@@ -16,5 +16,8 @@
     "dotenv": "^16.3.1",
     "jshint": "^2.13.6",
     "selenium-webdriver": "^4.15.0"
+  },
+  "devDependencies": {
+    "@google-cloud/functions-framework": "^3.3.0"
   }
 }
