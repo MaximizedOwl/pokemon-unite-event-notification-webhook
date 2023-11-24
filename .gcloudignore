@@ -1,0 +1,5 @@
+readme.md
+.python-version
+.gitignore
+.gitattributes
+node_modules/
