@@ -11,7 +11,7 @@ const {
   EXEC_SCRIPT_GET_SCROLLHEIGHT,
   EXEC_SCRIPT_SCROLLING,
   ENCODING_TYPE,
-} = require('./utils/constants');
+} = require('./constants');
 
 /* 
   .env ファイルから環境変数を読み込む
@@ -180,7 +180,7 @@ const connectWebhook = async (differencesList) => {
 /* 
   処理をまとめた関数
 */
-const execute = async () => {
+const main = async () => {
   const scrapingResult = await scraping(TONAMEL_URL);
   await writingForFile(scrapingResult);
 
@@ -193,4 +193,4 @@ const execute = async () => {
     : console.log(`新着イベントはありませんでした。`);
 };
 
-module.exports = execute;
+module.exports = main;
